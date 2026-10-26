@@ -8,26 +8,31 @@ import BlockRenderer from '../components/BlockRenderer.jsx';
 import ProjectCard from '../components/ProjectCard.jsx';
 import NotFound from './NotFound.jsx';
 
-export function ProjectView({ project: p }) {
+export function ProjectView({ project: p, showBack = false }) {
   const root = useRef(null);
   useReveal(root, '[data-reveal]', [p.id, p.blocks]);
-  const facts = [['Role', p.role], ['Year', p.year], ['Category', p.categories?.name], ['Tools', p.tools?.join(', ')]].filter(([, v]) => v);
+  const direction = [p.concept, p.audience && `Audience: ${p.audience}`].filter(Boolean);
+  const facts = [['Role', p.role], ['Tools', p.tools?.join(', ')]].filter(([, v]) => v);
   return (
     <article ref={root}>
-      <header className="section project-head">
-        <p className="eyebrow">{p.categories?.name}</p>
+      <header className="section pd-head">
+        {showBack && <Link to="/work" className="back">← Back to work</Link>}
         <h1>{p.title}</h1>
-        {p.description && <p className="lead">{p.description}</p>}
-        <dl className="facts">{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        <div className="chips">
+          {p.categories?.name && <span className="chip static">{p.categories.name}</span>}
+          {p.year && <span className="chip static">{p.year}</span>}
+        </div>
       </header>
-      {p.cover_url && <img className="cover" src={p.cover_url} alt={p.cover_alt || p.title} />}
-      {(p.challenge || p.concept || p.audience) && (
-        <section className="section three">
-          {[['Challenge', p.challenge], ['Concept', p.concept], ['Audience', p.audience]].filter(([, v]) => v).map(([k, v]) => <div key={k} data-reveal><h3>{k}</h3><p>{v}</p></div>)}
+      {p.cover_url && <div className="section pd-cover"><img src={p.cover_url} alt={p.cover_alt || p.title} style={{ objectPosition: `${p.cover_focal_x ?? 50}% ${p.cover_focal_y ?? 50}%` }} /></div>}
+      {(p.description || p.challenge || direction.length > 0 || facts.length > 0) && (
+        <section className="section pd-cols">
+          <div><h3>Project overview</h3>{p.description && <p>{p.description}</p>}{p.challenge && <p>{p.challenge}</p>}</div>
+          <div><h3>Creative direction</h3>{direction.map((d, i) => <p key={i}>{d}</p>)}
+            {facts.length > 0 && <ul>{facts.map(([k, v]) => <li key={k}><strong>{k}:</strong> {v}</li>)}</ul>}</div>
         </section>
       )}
       <BlockRenderer blocks={p.blocks} />
-      {p.tags?.length > 0 && <div className="section chips">{p.tags.map((t) => <span className="chip" key={t}>{t}</span>)}</div>}
+      {p.tags?.length > 0 && <div className="section chips">{p.tags.map((t) => <span className="chip static" key={t}>{t}</span>)}</div>}
     </article>
   );
 }
@@ -42,7 +47,7 @@ export default function ProjectDetail() {
   if (error) return <div className="section"><ErrorState error={error} onRetry={reload} /></div>;
   return (
     <>
-      <ProjectView project={p} />
+      <ProjectView project={p} showBack />
       <nav className="section pn" aria-label="More projects">
         {p.prev ? <Link to={`/work/${p.prev.slug}`}>← {p.prev.title}</Link> : <span />}
         {p.next ? <Link to={`/work/${p.next.slug}`}>{p.next.title} →</Link> : <span />}

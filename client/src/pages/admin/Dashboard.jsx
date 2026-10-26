@@ -27,6 +27,8 @@ export default function Dashboard() {
         <Stat label="Overdue invoices" value={d.overdueInvoices} to="/admin/invoices?status=overdue" warn={d.overdueInvoices > 0} />
         <div className="stat"><strong>{out.length ? out.map(([c, v]) => money(v, c)).join(' · ') : '—'}</strong><span>Outstanding</span></div>
       </div>
+      <section className="panel"><h2>Quick actions</h2>
+        <div className="quick">{[['/admin/projects/new', 'Add project', 'Create a new case study'], ['/admin/media', 'Upload media', 'Add artwork to the library'], ['/admin/packages', 'Edit packages', 'Update prices and deliverables'], ['/admin/enquiries', 'View messages', 'Read new enquiries']].map(([to, t, d]) => <Link key={to} to={to} className="quick-item"><strong>{t}</strong><span className="muted">{d}</span></Link>)}</div></section>
       <div className="grid2">
         <section className="panel"><h2>Upcoming deadlines</h2>
           {d.deadlines.length === 0 ? <Empty title="Nothing due in the next 14 days" /> : (

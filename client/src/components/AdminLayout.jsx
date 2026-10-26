@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { Spinner } from './ui.jsx';
+import Brand from './Brand.jsx';
 
 const nav = [
   ['/admin', 'Dashboard', true], ['/admin/projects', 'Projects'], ['/admin/packages', 'Packages'], ['/admin/media', 'Media'],
@@ -21,7 +22,7 @@ export default function AdminLayout() {
     <div className="admin">
       <button className="menu-btn admin-menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? 'Close' : 'Menu'}</button>
       <aside className={`sidebar ${open ? 'open' : ''}`}>
-        <div className="logo">admin<i>.</i></div>
+        <Brand />
         <nav aria-label="Admin">
           {nav.map(([to, label, end]) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}>{label}</NavLink>)}
         </nav>

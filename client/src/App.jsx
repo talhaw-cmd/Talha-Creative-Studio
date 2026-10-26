@@ -7,6 +7,7 @@ import Home from './pages/Home.jsx';
 import Work from './pages/Work.jsx';
 import ProjectDetail from './pages/ProjectDetail.jsx';
 import Packages from './pages/Packages.jsx';
+import Services from './pages/Services.jsx';
 import About from './pages/About.jsx';
 import Contact from './pages/Contact.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -34,6 +35,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="work" element={<Work />} />
           <Route path="work/:slug" element={<ProjectDetail />} />
+          <Route path="services" element={<Services />} />
           <Route path="packages" element={<Packages />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />

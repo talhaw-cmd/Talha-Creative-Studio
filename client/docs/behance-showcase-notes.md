@@ -35,3 +35,28 @@ Sources: Behance Help "Project Cover Image" (official), Behance Help upload FAQ 
 | Text formatting | Rich text module: headings, bold, italic, underline, lists, quote, links, alignment, clear formatting. Pasting is plain text. Output is sanitised on save and again on render. |
 | Image size management | Uploads over 2800 px wide are resized in the browser before upload. Multi-file upload / drag-and-drop in the editor creates one image module per file, in order. Warnings for images under 1000 px wide. |
 | Action rail, footer, more work | Sticky rail (copy link, start a project, back to top), tags/tools/date footer, previous/next and related projects. |
+
+---
+
+# Update: measurements from the editor and published page screenshots (2026-10-29)
+
+Measured from screenshots (scaled, so about ±2%).
+
+| What | Behance | Implemented here |
+|---|---|---|
+| Cover | Card preview 458×360 and crop frame 607×475, both ≈1.28:1 = **808×632** | Crop modal with fixed 808:632 frame, drag + zoom, saved as a real 1616×1264 JPEG. Warns if the crop area is under 808×632 |
+| Cover card | Image with title, owner, stats on a gradient | Same ratio everywhere (Work grid, "More by"), title/owner on a gradient in the cover preview |
+| Page structure | Title/owner strip **above** the canvas; canvas = modules only; cover is not added automatically | Same. `showCover` defaults to off |
+| Module gap | Styles → Content Spacing slider, default 2px | Slider 0–80px, default 2px |
+| Background | Styles → colour picker or hex | Same, plus 4 swatches; text colour adapts |
+| Photo Grid | "Custom" layout: each image keeps its ratio, row images share one height, ~2–3px gap, inset ~77–83% of canvas | `perRow` 1–4, gap 0/2/8/16/32, grid width 100/90/80/60%, optional square crop |
+| Text toolbar | Paragraph style, font, size, colour, B/I/U, 3 alignments, link/unlink, clear, text direction | Same (plus lists). RTL toggle for Urdu/Arabic. Sanitiser only keeps colour (hex), size 10–96px, 3 font stacks, `dir` and `text-align` |
+| Closing block | Black "Appreciate" block with title, stats, date | Title, published date, "Start a project", custom button, copy link (no likes/views: needs backend) |
+| Owner strip | Carousel of the owner's other projects | "More by …" carousel of 808:632 cards with arrows |
+| Details | Owner card, tools, creative fields, tags | Owner card + about, tools tiles, category tile, tags (max 10) |
+| Right rail | Tools, Save, Share, Boost, Appreciate | Copy link, Contact, Back to top (screens ≥1560px) |
+| Editor | Canvas on the left, sticky sidebar (Add Content, Edit Project, Custom Button) | Same: click a module to edit, floating tools, drop images onto the canvas |
+
+Not built (needs backend or is Behance Pro): Lightroom, Prototype, 3D, Attach Assets, Schedule/Password/Link-only, Boost, Appreciate/views, comments, Save.
+
+Storage: all new options live in existing JSON fields. Project styles and the custom button are in the hidden settings block (`divider` with `__settings`). An embed is a `video` block with `content.embed`. Photo grids are `gallery` blocks with `perRow`, `gap`, `gw`.

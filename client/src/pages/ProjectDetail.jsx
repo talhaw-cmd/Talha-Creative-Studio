@@ -40,7 +40,7 @@ export function ProjectOverlay() {
   }, [close]);
   useEffect(() => { scroller.current?.scrollTo(0, 0); }, [slug]);
 
-  const outside = (e) => { if (!e.target.closest('.sc-canvas, .sc-rail, .sc-more, .ov-close')) close(); };
+  const outside = (e) => { if (!e.target.closest('.sc, .ov-msg, .ov-close')) close(); };
 
   return (
     <div className="ov" ref={scroller} role="dialog" aria-modal="true" aria-label={shown?.title || 'Project'} tabIndex={-1} onMouseDown={outside}>

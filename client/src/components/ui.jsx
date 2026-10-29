@@ -48,13 +48,15 @@ export function ConfirmProvider({ children }) {
 
 export function Modal({ title, onClose, children, wide }) {
   const ref = useRef(null);
+  const close = useRef(onClose);
+  close.current = onClose; // keep latest handler without re-running the effect (re-running stole focus from inputs)
   useEffect(() => {
     const prev = document.activeElement;
     ref.current?.focus();
-    const onKey = (e) => e.key === 'Escape' && onClose();
+    const onKey = (e) => e.key === 'Escape' && close.current();
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('keydown', onKey); prev?.focus?.(); };
-  }, [onClose]);
+  }, []);
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>

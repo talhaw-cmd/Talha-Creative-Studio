@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { api, money } from '../lib/api.js';
-import { useAsync, useTitle } from '../lib/useAsync.js';
+import { money } from '../lib/api.js';
+import { useApi, useTitle } from '../lib/useAsync.js';
 import { useBatchIn, useSplitHeadings } from '../lib/motion.js';
 import { Empty, ErrorState, Spinner } from '../components/ui.jsx';
 import PackageCard, { centerFeatured, priceLabel } from '../components/PackageCard.jsx';
@@ -11,7 +11,7 @@ import Process from '../components/Process.jsx';
 export default function Packages() {
   useTitle('Packages');
   const root = useRef(null);
-  const { data, loading, error, reload } = useAsync(() => api.get('/packages'), []);
+  const { data, loading, error, reload } = useApi('/packages');
   const list = centerFeatured(data?.data || []);
   useSplitHeadings(root, []);
   useBatchIn(root, '.card-pkg', [data]);

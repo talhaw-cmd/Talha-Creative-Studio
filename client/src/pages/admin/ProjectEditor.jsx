@@ -5,11 +5,13 @@ import { useAsync, useTitle } from '../../lib/useAsync.js';
 import { ErrorState, Field, Modal, Spinner, StatusBadge, useConfirm, useToast, useUnsavedWarning } from '../../components/ui.jsx';
 import { MediaField } from '../../components/MediaPicker.jsx';
 import BlockEditor from '../../components/BlockEditor.jsx';
-import { ProjectView } from '../ProjectDetail.jsx';
+import CoverPicker from '../../components/CoverPicker.jsx';
+import Showcase from '../../components/Showcase.jsx';
+import { defaultSettings, settingsBlock, splitBlocks } from '../../lib/showcase.js';
 
 const blank = { title: '', slug: '', category_id: '', description: '', year: new Date().getFullYear(), role: 'Graphic designer', tools: '', tags: '',
   challenge: '', concept: '', audience: '', cover_media_id: null, cover_url: null, cover_alt: '', cover_focal_x: 50, cover_focal_y: 50,
-  video_preview_url: '', featured: false, status: 'draft', blocks: [] };
+  video_preview_url: '', featured: false, status: 'draft', blocks: [], settings: defaultSettings };
 const list = (s) => String(s || '').split(',').map((x) => x.trim()).filter(Boolean);
 const key = () => Math.random().toString(36).slice(2);
 
@@ -35,7 +37,8 @@ export default function ProjectEditor() {
     setForm({ ...blank, ...p, category_id: p.category_id || '', tools: (p.tools || []).join(', '), tags: (p.tags || []).join(', '),
       description: p.description || '', challenge: p.challenge || '', concept: p.concept || '', audience: p.audience || '',
       cover_alt: p.cover_alt || '', role: p.role || '', video_preview_url: p.video_preview_url || '',
-      blocks: p.blocks.map((b) => ({ _k: b.id, type: b.type, content: b.content })) });
+      settings: splitBlocks(p.blocks).settings,
+      blocks: splitBlocks(p.blocks).modules.map((b) => ({ _k: b.id, type: b.type, content: b.content })) });
     setSlugTouched(true); setDirty(false);
   }, [loaded.data, isNew]);
 
@@ -62,7 +65,7 @@ export default function ProjectEditor() {
       let pid = id;
       if (isNew) pid = (await admin.post('/projects', payload())).data.id;
       else await admin.patch(`/projects/${id}`, payload());
-      await admin.put(`/projects/${pid}/blocks`, { blocks: form.blocks.map((b, i) => ({ type: b.type, content: b.content, position: i })) });
+      await admin.put(`/projects/${pid}/blocks`, { blocks: [settingsBlock(form.settings), ...form.blocks].map((b, i) => ({ type: b.type, content: b.content, position: i })) });
       setDirty(false); toast.success('Saved');
       if (isNew) { nav(`/admin/projects/${pid}`, { replace: true }); }
       else loaded.reload();
@@ -89,10 +92,11 @@ export default function ProjectEditor() {
 
   const previewData = useMemo(() => ({
     ...form, tools: list(form.tools), tags: list(form.tags), categories: cats.data?.data.find((c) => c.id === form.category_id),
-    blocks: form.blocks.map((b, i) => ({ id: b._k, type: b.type, content: b.content, position: i })),
+    blocks: [settingsBlock(form.settings), ...form.blocks].map((b, i) => ({ id: b._k || 's', type: b.type, content: b.content, position: i })),
   }), [form, cats.data]);
+  const setS = (patch) => { setForm((f) => ({ ...f, settings: { ...f.settings, ...patch } })); setDirty(true); };
 
-  if (loaded.loading) return <Spinner />;
+  if (loaded.loading && !loaded.data) return <Spinner />;
   if (loaded.error) return <ErrorState error={loaded.error} onRetry={loaded.reload} />;
 
   return (
@@ -127,13 +131,21 @@ export default function ProjectEditor() {
       </section>
 
       <section className="panel"><h2>Cover artwork</h2>
-        <MediaField value={form.cover_media_id} url={form.cover_url} onChange={(m) => { setForm((f) => ({ ...f, cover_media_id: m?.id || null, cover_url: m?.url || null, cover_alt: m ? (f.cover_alt || m.alt_text || '') : '' })); setDirty(true); }} />
-        <div className="grid3">
-          <Field label="Cover alt text *" error={errors.cover_alt}><input className="input" value={form.cover_alt} onChange={(e) => set('cover_alt', e.target.value)} /></Field>
-          <Field label={`Focal point X (${form.cover_focal_x}%)`}><input type="range" min="0" max="100" value={form.cover_focal_x} onChange={(e) => set('cover_focal_x', e.target.value)} /></Field>
-          <Field label={`Focal point Y (${form.cover_focal_y}%)`}><input type="range" min="0" max="100" value={form.cover_focal_y} onChange={(e) => set('cover_focal_y', e.target.value)} /></Field>
-        </div>
+        <CoverPicker url={form.cover_url} hasImage={!!form.cover_media_id} fx={Number(form.cover_focal_x)} fy={Number(form.cover_focal_y)}
+          onPick={(m) => { setForm((f) => ({ ...f, cover_media_id: m.id, cover_url: m.url, cover_alt: f.cover_alt || m.alt_text || '', cover_focal_x: 50, cover_focal_y: 50 })); setDirty(true); }}
+          onRemove={() => { setForm((f) => ({ ...f, cover_media_id: null, cover_url: null, cover_alt: '' })); setDirty(true); }}
+          onFocal={(x, y) => { setForm((f) => ({ ...f, cover_focal_x: x, cover_focal_y: y })); setDirty(true); }} />
+        <Field label="Cover alt text *" error={errors.cover_alt}><input className="input" value={form.cover_alt} onChange={(e) => set('cover_alt', e.target.value)} /></Field>
         <Field label="Video preview URL (optional)"><input className="input" type="url" value={form.video_preview_url} onChange={(e) => set('video_preview_url', e.target.value)} /></Field>
+      </section>
+
+      <section className="panel"><h2>Case-study look</h2>
+        <div className="layout-row">
+          <label>Background<span className="row gap"><input type="color" aria-label="Background colour" value={form.settings.bg} onChange={(e) => setS({ bg: e.target.value })} />
+            {['#ffffff', '#f5f3ee', '#111111', '#1c2438'].map((c) => <button key={c} type="button" className="swatch" style={{ background: c }} aria-label={`Use ${c}`} onClick={() => setS({ bg: c })} />)}</span></label>
+          <label>Space between blocks<select className="input" value={form.settings.spacing} onChange={(e) => setS({ spacing: Number(e.target.value) })}><option value="0">None (seamless)</option><option value="16">Small</option><option value="40">Medium</option><option value="80">Large</option></select></label>
+          <label className="check"><input type="checkbox" checked={form.settings.showCover} onChange={(e) => setS({ showCover: e.target.checked })} /> Show cover at the top of the case study</label>
+        </div>
       </section>
 
       <section className="panel"><h2>Case-study blocks</h2>
@@ -144,7 +156,7 @@ export default function ProjectEditor() {
 
       {preview && (
         <Modal title="Preview as visitor" onClose={() => setPreview(false)} wide>
-          <div className="preview-frame"><ProjectView project={previewData} /></div>
+          <div className="preview-frame"><Showcase project={previewData} variant="preview" /></div>
         </Modal>
       )}
     </form>

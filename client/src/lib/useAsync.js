@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiKey, fetchCached, peek } from './api.js';
 
 // Loads data with loading/error/retry state. `deps` re-run the loader.
 export function useAsync(loader, deps = []) {
@@ -26,5 +27,30 @@ export function useReducedMotion() {
 }
 
 export function useTitle(title) {
-  useEffect(() => { document.title = title ? `${title} — graphicsbytalha` : 'graphicsbytalha'; }, [title]);
+  useEffect(() => {
+    const prev = document.title;
+    document.title = title ? `${title} — graphicsbytalha` : 'graphicsbytalha';
+    return () => { document.title = prev; };
+  }, [title]);
+}
+
+// Cached GET. Shows cached data instantly (no spinner) and refreshes it quietly in the background.
+// `loading` is only true when there is nothing to show yet.
+export function useApi(path, params, { admin = false, skip = false } = {}) {
+  const key = apiKey(admin, path, params);
+  const [state, setState] = useState(() => ({ key, data: peek(key) ?? null, error: null, fetching: !skip }));
+  let cur = state;
+  if (state.key !== key) { cur = { key, data: peek(key) ?? null, error: null, fetching: !skip }; setState(cur); }
+  const run = useCallback(() => {
+    if (skip) return undefined;
+    let live = true;
+    setState((s) => (s.key === key ? { ...s, fetching: true } : s));
+    fetchCached(admin, path, params)
+      .then((json) => live && setState((s) => (s.key === key ? { key, data: json, error: null, fetching: false } : s)))
+      .catch((error) => live && setState((s) => (s.key === key ? { ...s, error, fetching: false } : s)));
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, skip]);
+  useEffect(() => run(), [run]);
+  return { data: cur.data, loading: !cur.data && !cur.error && !skip, error: cur.data ? null : cur.error, refreshing: cur.fetching && !!cur.data, reload: run };
 }

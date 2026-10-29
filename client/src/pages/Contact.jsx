@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { useAsync, useTitle } from '../lib/useAsync.js';
+import { useApi, useTitle } from '../lib/useAsync.js';
 import { useSplitHeadings } from '../lib/motion.js';
 import { Field } from '../components/ui.jsx';
 import Lines from '../components/Lines.jsx';
@@ -17,7 +17,7 @@ export default function Contact() {
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ state: 'idle' });
-  const pk = useAsync(() => api.get('/packages'), []);
+  const pk = useApi('/packages');
   useSplitHeadings(root, []);
 
   useEffect(() => {

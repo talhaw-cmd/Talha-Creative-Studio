@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { admin, fmtSize } from '../../lib/api.js';
+import { uploadMedia } from '../../lib/image.js';
 import { useAsync, useDebounced, useTitle } from '../../lib/useAsync.js';
 import { Empty, ErrorState, Field, Modal, Pager, Spinner, useConfirm, useToast } from '../../components/ui.jsx';
 
@@ -17,9 +18,8 @@ export default function Media() {
     const files = [...(e.target.files || [])]; e.target.value = '';
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
-      if (f.size > 20 * 1024 * 1024) { toast.error(`${f.name} is larger than 20 MB`); continue; }
       setProgress(`Uploading ${i + 1} of ${files.length}: ${f.name}`);
-      try { const r = await admin.upload('/media', f); if (r.meta?.reused) toast.success(`${f.name} already existed — reused`); }
+      try { const r = await uploadMedia(f); if (r.meta?.reused) toast.success(`${f.name} already existed — reused`); else if (r.resized) toast.success(`${f.name} resized to 2800px wide`); }
       catch (err) { toast.error(`${f.name}: ${err.message}`); }
     }
     setProgress(''); reload();

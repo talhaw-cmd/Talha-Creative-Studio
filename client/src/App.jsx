@@ -1,11 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import PublicLayout from './components/PublicLayout.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
 import { Spinner } from './components/ui.jsx';
 import Home from './pages/Home.jsx';
 import Work from './pages/Work.jsx';
-import ProjectDetail from './pages/ProjectDetail.jsx';
+import ProjectDetail, { ProjectOverlay } from './pages/ProjectDetail.jsx';
 import Packages from './pages/Packages.jsx';
 import Services from './pages/Services.jsx';
 import About from './pages/About.jsx';
@@ -28,9 +28,12 @@ const Enquiries = lazy(() => import('./pages/admin/Enquiries.jsx'));
 const Settings = lazy(() => import('./pages/admin/Settings.jsx'));
 
 export default function App() {
+  const location = useLocation();
+  // When a project opens from a list, the list stays mounted underneath and the project shows as an overlay.
+  const background = location.state?.background;
   return (
     <Suspense fallback={<Spinner />}>
-      <Routes>
+      <Routes location={background || location}>
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="work" element={<Work />} />
@@ -57,6 +60,7 @@ export default function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
+      {background && <Routes><Route path="/work/:slug" element={<ProjectOverlay />} /></Routes>}
     </Suspense>
   );
 }

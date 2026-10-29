@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api } from '../lib/api.js';
-import { useAsync, useDebounced, useTitle } from '../lib/useAsync.js';
+import { useApi, useDebounced, useTitle } from '../lib/useAsync.js';
 import { useBatchIn, useSplitHeadings } from '../lib/motion.js';
 import { Empty, ErrorState, Pager, Spinner } from '../components/ui.jsx';
 import ProjectCard from '../components/ProjectCard.jsx';
@@ -18,9 +17,8 @@ export default function Work() {
   const [shuffled, setShuffled] = useState(0);
   const root = useRef(null);
 
-  const cats = useAsync(() => api.get('/categories'), []);
-  const { data, loading, error, reload } = useAsync(
-    () => api.get('/projects', { category, sort, q: dq, page, limit: 12 }), [category, sort, dq, page]);
+  const cats = useApi('/categories');
+  const { data, loading, error, reload } = useApi('/projects', { category, sort, q: dq, page, limit: 12 });
 
   const set = (k, v) => { const n = new URLSearchParams(params); v ? n.set(k, v) : n.delete(k); if (k !== 'page') n.delete('page'); setParams(n, { replace: true }); };
   const items = useMemo(() => {

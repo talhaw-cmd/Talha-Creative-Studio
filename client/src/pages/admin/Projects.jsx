@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { admin, fmtDate, slugify } from '../../lib/api.js';
-import { useAsync, useDebounced, useTitle } from '../../lib/useAsync.js';
+import { useApi, useDebounced, useTitle } from '../../lib/useAsync.js';
 import { Empty, ErrorState, Field, Modal, Pager, Spinner, StatusBadge, useConfirm, useToast } from '../../components/ui.jsx';
 
 function Categories({ onClose }) {
   const toast = useToast(); const confirm = useConfirm();
-  const { data, loading, error, reload } = useAsync(() => admin.get('/categories'), []);
+  const { data, loading, error, reload } = useApi('/categories', undefined, { admin: true });
   const [name, setName] = useState('');
   async function add(e) {
     e.preventDefault(); if (!name.trim()) return;
@@ -39,7 +39,7 @@ export default function Projects() {
   const dq = useDebounced(q);
   const [cats, setCats] = useState(false);
   const nav = useNavigate(); const toast = useToast(); const confirm = useConfirm();
-  const { data, loading, error, reload } = useAsync(() => admin.get('/projects', { status, q: dq, page, limit: 15 }), [status, dq, page]);
+  const { data, loading, error, reload } = useApi('/projects', { status, q: dq, page, limit: 15 }, { admin: true });
   const set = (k, v) => { const n = new URLSearchParams(params); v ? n.set(k, v) : n.delete(k); if (k !== 'page') n.delete('page'); setParams(n, { replace: true }); };
 
   const act = (fn, ok) => async () => { try { await fn(); toast.success(ok); reload(); } catch (e) { toast.error(e.message); } };

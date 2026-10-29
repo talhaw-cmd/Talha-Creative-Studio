@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { api } from '../lib/api.js';
-import { useAsync } from '../lib/useAsync.js';
+import { useApi } from '../lib/useAsync.js';
 import Brand from './Brand.jsx';
 
 const links = [['/work', 'Work'], ['/services', 'Services'], ['/packages', 'Packages'], ['/about', 'About']];
@@ -9,7 +8,7 @@ const links = [['/work', 'Work'], ['/services', 'Services'], ['/packages', 'Pack
 export default function PublicLayout() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  const { data } = useAsync(() => api.get('/settings'), []);
+  const { data } = useApi('/settings');
   const s = data?.data;
 
   useEffect(() => { setOpen(false); window.scrollTo(0, 0); }, [pathname]);

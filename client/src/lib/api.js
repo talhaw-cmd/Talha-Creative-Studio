@@ -32,22 +32,43 @@ const qs = (params = {}) => {
   return s ? `?${s}` : '';
 };
 
+// ---------- AJAX cache: stale-while-revalidate, de-duplicated, cleared on any admin write ----------
+const mem = new Map();
+const inflight = new Map();
+export const apiKey = (isAdmin, path, params) => `${isAdmin ? 'a' : 'p'}:${path}${qs(params)}`;
+export const peek = (key) => mem.get(key);
+export const clearCache = () => mem.clear();
+export function fetchCached(isAdmin, path, params) {
+  const key = apiKey(isAdmin, path, params);
+  if (inflight.has(key)) return inflight.get(key);
+  const p = (isAdmin ? request(`/admin${path}${qs(params)}`, { admin: true }) : request(`${path}${qs(params)}`))
+    .then((json) => { mem.set(key, json); return json; })
+    .finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
+export function prefetch(path, params) {
+  const key = apiKey(false, path, params);
+  if (!mem.has(key) && !inflight.has(key)) fetchCached(false, path, params).catch(() => {});
+}
+
 export const api = {
   get: (path, params) => request(path + qs(params)),
   post: (path, body) => request(path, { method: 'POST', body }),
 };
 
+const written = (p) => p.then((r) => { mem.clear(); return r; });
 export const admin = {
   get: (path, params) => request('/admin' + path + qs(params), { admin: true }),
-  post: (path, body) => request('/admin' + path, { method: 'POST', body: body ?? {}, admin: true }),
-  put: (path, body) => request('/admin' + path, { method: 'PUT', body, admin: true }),
-  patch: (path, body) => request('/admin' + path, { method: 'PATCH', body, admin: true }),
-  del: (path) => request('/admin' + path, { method: 'DELETE', admin: true }),
+  post: (path, body) => written(request('/admin' + path, { method: 'POST', body: body ?? {}, admin: true })),
+  put: (path, body) => written(request('/admin' + path, { method: 'PUT', body, admin: true })),
+  patch: (path, body) => written(request('/admin' + path, { method: 'PATCH', body, admin: true })),
+  del: (path) => written(request('/admin' + path, { method: 'DELETE', admin: true })),
   upload: (path, file, fields = {}) => {
     const fd = new FormData();
     Object.entries(fields).forEach(([k, v]) => v != null && fd.append(k, v));
     fd.append('file', file);
-    return request('/admin' + path, { method: 'POST', body: fd, admin: true, form: true });
+    return written(request('/admin' + path, { method: 'POST', body: fd, admin: true, form: true }));
   },
 };
 

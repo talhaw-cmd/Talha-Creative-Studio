@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { admin, fmtSize } from '../lib/api.js';
+import { uploadMedia } from '../lib/image.js';
 import { useAsync, useDebounced } from '../lib/useAsync.js';
 import { Empty, ErrorState, Modal, Pager, Spinner, useToast } from './ui.jsx';
 
@@ -16,9 +17,12 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }) {
 
   async function onFile(e) {
     const f = e.target.files?.[0]; if (!f) return;
-    if (f.size > 20 * 1024 * 1024) return toast.error('File is larger than 20 MB');
     setBusy(true);
-    try { const r = await admin.upload('/media', f); toast.success(r.meta?.reused ? 'Already in library — reused' : 'Uploaded'); onSelect(r.data); }
+    try {
+      const r = await uploadMedia(f);
+      toast.success(r.meta?.reused ? 'Already in library — reused' : r.resized ? 'Uploaded (resized to 2800px wide)' : 'Uploaded');
+      onSelect(r.data);
+    }
     catch (err) { toast.error(err.message); } finally { setBusy(false); e.target.value = ''; }
   }
 
